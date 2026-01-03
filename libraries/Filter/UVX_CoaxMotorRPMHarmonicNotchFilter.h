@@ -46,6 +46,10 @@ public:
      * @param dt sampling time, [sec]
     */
     Vector3f run(const Vector3f &input, const float up_rpm, const float lp_rpm, const float dt);
+
+    // reset all filters
+    void reset();
+
 private:
     // free allocated filters
     void free_filters();

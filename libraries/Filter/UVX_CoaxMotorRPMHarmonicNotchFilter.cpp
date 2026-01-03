@@ -66,6 +66,22 @@ bool UVX_CoaxMotorRPMHarmonicNotchFilter::allocate_filters(const float *harmonic
     return true;
 }
 
+// reset all filters
+void UVX_CoaxMotorRPMHarmonicNotchFilter::reset()
+{
+    // exit if filter allocation has failed
+    if (_filters == nullptr || !_num_harmonics)
+    {
+        return;
+    }
+
+    uint16_t nfilters = 2 * _num_harmonics;
+    for (uint16_t i = 0; i < nfilters; ++i)
+    {
+        _filters[i].reset();
+    }
+}
+
 /**
  * run the filter on an input 3D vector sample
  * @param input input 3D vector with values (e.g. gyro or accel measurements)
