@@ -6,15 +6,13 @@
 #pragma once
 
 #include "UVX_HarmonicNotchFilter.h"
+#include "UVX_CoaxMotorRPMNotchFilterParams.h"
 
 /**
  * @brief Harmonic notch filter class for a coaxial motors configuration
 */
 class UVX_CoaxMotorRPMHarmonicNotchFilter
 {
-    // maximum allowed number of harmonics per motor in the coaxial configuration
-    static constexpr uint16_t MAX_HARMONICS_PER_COAX_MOTOR = 4;
-
     // minimum allowed notch frequency
     static constexpr float MIN_NOTCH_FREQUENCY_HZ = 10.0f;
 
@@ -32,9 +30,10 @@ public:
      * @brief allocate filters
      * @param harmonic_scalars pointer to a float array with scalars of a propeller rotational frequency at which notch filters will be applied
      * @param bandwidth_scalars pointer to a float array with scalars of a propeller rotational frequency, defining the filter bandwith at the respective frequency
-     * @param num_harmonics number of harmonics as the size of the provided scalar arrays
+     * @param num_harmonics number of harmonics to use up to UVX_MAX_HARMONICS_PER_COAX_MOTOR. Set to zero to disable the filter
      * @return true if allocation was successful, false otherwise
-     * @note if num_harmonics is greater than MAX_HARMONICS_PER_COAX_MOTOR the first MAX_HARMONICS_PER_COAX_MOTOR elements of both arrays will be used
+     * @note if num_harmonics is greater than UVX_MAX_HARMONICS_PER_COAX_MOTOR the first UVX_MAX_HARMONICS_PER_COAX_MOTOR elements of both arrays will be used. Care must
+     * be taken to ensure that the harmonic_scalars and bandwidth_scalars arrays are with the same length and with dimension equal to or greater than num_harmonics.
     */
     bool allocate_filters(const float *harmonic_scalars, const float *bandwidth_scalars, const uint16_t num_harmonics);
 
@@ -55,10 +54,10 @@ private:
     void free_filters();
 
     // vector of harmonics of a propeller rotational frequency at which notch filters will be applied
-    float _harmonic_scalars[MAX_HARMONICS_PER_COAX_MOTOR]{};
+    float _harmonic_scalars[UVX_MAX_HARMONICS_PER_COAX_MOTOR]{};
 
     // vector of scalars of a propeller rotational frequency, defining the filter bandwith at the respective frequency
-    float _bandwidth_scalars[MAX_HARMONICS_PER_COAX_MOTOR]{};
+    float _bandwidth_scalars[UVX_MAX_HARMONICS_PER_COAX_MOTOR]{};
 
     // number of harmonics per motor
     uint16_t _num_harmonics{0};

@@ -24,8 +24,10 @@ void UVX_CoaxMotorRPMHarmonicNotchFilter::free_filters()
  * @brief allocate filters
  * @param harmonic_scalars pointer to a float array with scalars of a propeller rotational frequency at which notch filters will be applied
  * @param bandwidth_scalars pointer to a float array with scalars of a propeller rotational frequency, defining the filter bandwith at the respective frequency
- * @param num_harmonics number of harmonics as the size of the provided scalar arrays
- * @note if num_harmonics is greater than MAX_HARMONICS_PER_COAX_MOTOR the first MAX_HARMONICS_PER_COAX_MOTOR elements of both arrays will be used
+ * @param num_harmonics number of harmonics to use up to UVX_MAX_HARMONICS_PER_COAX_MOTOR. Set to zero to disable the filter
+ * @return true if allocation was successful, false otherwise
+ * @note if num_harmonics is greater than UVX_MAX_HARMONICS_PER_COAX_MOTOR the first UVX_MAX_HARMONICS_PER_COAX_MOTOR elements of both arrays will be used. Care must
+ * be taken to ensure that the harmonic_scalars and bandwidth_scalars arrays are with the same length and with dimension equal to or greater than num_harmonics.
 */
 bool UVX_CoaxMotorRPMHarmonicNotchFilter::allocate_filters(const float *harmonic_scalars, const float *bandwidth_scalars, const uint16_t num_harmonics)
 {
@@ -33,10 +35,10 @@ bool UVX_CoaxMotorRPMHarmonicNotchFilter::allocate_filters(const float *harmonic
     free_filters();
 
     // initialize the harmonic and bandwidth scalars
-    _num_harmonics = MIN(num_harmonics, MAX_HARMONICS_PER_COAX_MOTOR);
+    _num_harmonics = MIN(num_harmonics, UVX_MAX_HARMONICS_PER_COAX_MOTOR);
     if (_num_harmonics == 0)
     {
-        return false;
+        return true;
     }
 
     for (uint16_t i = 0; i < _num_harmonics; i++)
@@ -69,7 +71,7 @@ bool UVX_CoaxMotorRPMHarmonicNotchFilter::allocate_filters(const float *harmonic
 // reset all filters
 void UVX_CoaxMotorRPMHarmonicNotchFilter::reset()
 {
-    // exit if filter allocation has failed
+    // exit if filter allocation has failed or the filter is disabled
     if (_filters == nullptr || !_num_harmonics)
     {
         return;
@@ -91,7 +93,7 @@ void UVX_CoaxMotorRPMHarmonicNotchFilter::reset()
 */
 Vector3f UVX_CoaxMotorRPMHarmonicNotchFilter::run(const Vector3f &input, const float up_rpm, const float lp_rpm, const float dt)
 {
-    // exit if filter allocation has failed
+    // exit if filter allocation has failed or the filter is disabled
     if (_filters == nullptr || !_num_harmonics)
     {
         return input;
