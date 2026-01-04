@@ -41,12 +41,6 @@ bool UVX_CoaxMotorRPMHarmonicNotchFilter::allocate_filters(const float *harmonic
         return true;
     }
 
-    for (uint16_t i = 0; i < _num_harmonics; i++)
-    {
-        _harmonic_scalars[i] = harmonic_scalars[i];
-        _bandwidth_scalars[i] = bandwidth_scalars[i];
-    }
-
     // allocate the filters
     const uint16_t nfilters = 2 * _num_harmonics;
     _filters = NEW_NOTHROW UVX_HarmonicNotchFilterVector3f[nfilters];
@@ -58,14 +52,57 @@ bool UVX_CoaxMotorRPMHarmonicNotchFilter::allocate_filters(const float *harmonic
         return false;
     }
 
+    // update filter scalars
+    update_scalars(harmonic_scalars, bandwidth_scalars);
+
     // initial reset of the filters
-    for (uint16_t i = 0; i < nfilters; ++i)
-    {
-        _filters[i].reset();
-        _filters[i].set_min_allowed_notch_frequency_hz(MIN_NOTCH_FREQUENCY_HZ);
-    }
+    reset();
 
     return true;
+}
+
+/**
+ * @brief update filter parameters in runtime
+ * @param harmonic_scalars pointer to a float array with scalars of a propeller rotational frequency at which notch filters will be applied
+ * @param bandwidth_scalars pointer to a float array with scalars of a propeller rotational frequency, defining the filter bandwith at the respective frequency
+ * @param num_harmonics number of harmonics to use up to UVX_MAX_HARMONICS_PER_COAX_MOTOR. Set to zero to disable the filter
+ * @return true if update was successful, false otherwise
+ * @note if num_harmonics is greater than UVX_MAX_HARMONICS_PER_COAX_MOTOR the first UVX_MAX_HARMONICS_PER_COAX_MOTOR elements of both arrays will be used. Care must
+ * be taken to ensure that the harmonic_scalars and bandwidth_scalars arrays are with the same length and with dimension equal to or greater than num_harmonics. Filters
+ * will be re-allocated if the number of harmonics has changed. Otherwise, only the harmonic and bandwidth scalars are updated
+*/
+bool UVX_CoaxMotorRPMHarmonicNotchFilter::update_params(const float *harmonic_scalars, const float *bandwidth_scalars, const uint16_t num_harmonics)
+{
+    // check if filters have to be re-allocated
+    if (num_harmonics == _num_harmonics)
+    {
+        // no change in filters count
+        if (_num_harmonics == 0)
+        {
+            return true;
+        }
+
+        bool params_changed = false;
+        for (uint16_t i = 0; i < _num_harmonics; i++)
+        {
+            if (fabsf(_harmonic_scalars[i] - harmonic_scalars[i]) > 1e-6f || fabsf(_bandwidth_scalars[i] - bandwidth_scalars[i]) > 1e-6f)
+            {
+                params_changed = true;
+                break;
+            }
+        }
+
+        // update filter scalars. Do not reset the filters to prevent continuous filters resets during continuous runtime parameter updates
+        if (params_changed)
+        {
+            update_scalars(harmonic_scalars, bandwidth_scalars);
+        }
+        
+        return true;
+    }
+
+    // re-allocate the filters
+    return allocate_filters(harmonic_scalars, bandwidth_scalars, num_harmonics);
 }
 
 // reset all filters
@@ -81,6 +118,17 @@ void UVX_CoaxMotorRPMHarmonicNotchFilter::reset()
     for (uint16_t i = 0; i < nfilters; ++i)
     {
         _filters[i].reset();
+        _filters[i].set_min_allowed_notch_frequency_hz(MIN_NOTCH_FREQUENCY_HZ);
+    }
+}
+
+// update the harmonic and bandwidth scalars
+void UVX_CoaxMotorRPMHarmonicNotchFilter::update_scalars(const float *harmonic_scalars, const float *bandwidth_scalars)
+{
+    for (uint16_t i = 0; i < _num_harmonics; i++)
+    {
+        _harmonic_scalars[i] = harmonic_scalars[i];
+        _bandwidth_scalars[i] = bandwidth_scalars[i];
     }
 }
 

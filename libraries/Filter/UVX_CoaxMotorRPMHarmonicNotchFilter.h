@@ -38,6 +38,18 @@ public:
     bool allocate_filters(const float *harmonic_scalars, const float *bandwidth_scalars, const uint16_t num_harmonics);
 
     /**
+     * @brief update filter parameters in runtime
+     * @param harmonic_scalars pointer to a float array with scalars of a propeller rotational frequency at which notch filters will be applied
+     * @param bandwidth_scalars pointer to a float array with scalars of a propeller rotational frequency, defining the filter bandwith at the respective frequency
+     * @param num_harmonics number of harmonics to use up to UVX_MAX_HARMONICS_PER_COAX_MOTOR. Set to zero to disable the filter
+     * @return true if update was successful, false otherwise
+     * @note if num_harmonics is greater than UVX_MAX_HARMONICS_PER_COAX_MOTOR the first UVX_MAX_HARMONICS_PER_COAX_MOTOR elements of both arrays will be used. Care must
+     * be taken to ensure that the harmonic_scalars and bandwidth_scalars arrays are with the same length and with dimension equal to or greater than num_harmonics. Filters
+     * will be re-allocated if the number of harmonics has changed. Otherwise, only the harmonic and bandwidth scalars are updated
+    */
+    bool update_params(const float *harmonic_scalars, const float *bandwidth_scalars, const uint16_t num_harmonics);
+
+    /**
      * run the filter on an input 3D vector sample
      * @param input input 3D vector with values (e.g. gyro or accel measurements)
      * @param up_rpm angular velocity of the upper propeller, [RPM]
@@ -52,6 +64,9 @@ public:
 private:
     // free allocated filters
     void free_filters();
+
+    // update the harmonic and bandwidth scalars
+    void update_scalars(const float *harmonic_scalars, const float *bandwidth_scalars);
 
     // vector of harmonics of a propeller rotational frequency at which notch filters will be applied
     float _harmonic_scalars[UVX_MAX_HARMONICS_PER_COAX_MOTOR]{};
