@@ -5,6 +5,7 @@
 /// @brief Harmonic notch filter class for a coaxial motors configuration
 
 #include "UVX_CoaxMotorRPMHarmonicNotchFilter.h"
+#include <GCS_MAVLink/GCS.h>
 
 // destructor
 UVX_CoaxMotorRPMHarmonicNotchFilter::~UVX_CoaxMotorRPMHarmonicNotchFilter()
@@ -58,6 +59,7 @@ bool UVX_CoaxMotorRPMHarmonicNotchFilter::allocate_filters(const float *harmonic
     // initial reset of the filters
     reset();
 
+    GCS_SEND_TEXT(MAV_SEVERITY_INFO, "Successfully allocated %d notch instances", nfilters);
     return true;
 }
 
@@ -92,12 +94,13 @@ bool UVX_CoaxMotorRPMHarmonicNotchFilter::update_params(const float *harmonic_sc
             }
         }
 
-        // update filter scalars. Do not reset the filters to prevent continuous filters resets during continuous runtime parameter updates
-        if (params_changed)
+        if (!params_changed)
         {
-            update_scalars(harmonic_scalars, bandwidth_scalars);
+            return false;
         }
-        
+
+        // update filter scalars. Do not reset the filters to prevent continuous filters resets during continuous runtime parameter updates
+        update_scalars(harmonic_scalars, bandwidth_scalars);
         return true;
     }
 
