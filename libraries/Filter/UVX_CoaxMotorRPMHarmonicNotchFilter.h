@@ -5,8 +5,11 @@
 /// @brief Harmonic notch filter class for a coaxial motors configuration
 #pragma once
 
+#include <AP_Param/AP_Param.h>
 #include "UVX_HarmonicNotchFilter.h"
-#include "UVX_CoaxMotorRPMNotchFilterParams.h"
+
+// maximum allowed number of harmonics per motor in the coaxial configuration
+static constexpr uint16_t UVX_MAX_HARMONICS_PER_COAX_MOTOR = 8;
 
 /**
  * @brief Harmonic notch filter class for a coaxial motors configuration
@@ -79,4 +82,26 @@ private:
 
     // individual filter instances container
     UVX_HarmonicNotchFilterVector3f* _filters = nullptr;
+};
+
+/**
+ * @brief Parameters class of the coaxial motors configuration harmonic notch filter
+*/
+class UVX_CoaxMotorRPMNotchFilterParams
+{
+public:
+    // constructor
+    UVX_CoaxMotorRPMNotchFilterParams(void);
+
+    // table of user settable parameters
+    static const AP_Param::GroupInfo var_info[];
+
+    // number of harmonics to use up to UVX_MAX_HARMONICS_PER_COAX_MOTOR
+    AP_Int8 num_harmonics;
+
+    // vector of harmonics of a propeller rotational frequency at which notch filters will be applied
+    AP_Float harmonic_scalars[UVX_MAX_HARMONICS_PER_COAX_MOTOR];
+
+    // vector of scalars of a propeller rotational frequency, defining the filter bandwith at the respective frequency
+    AP_Float bandwidth_scalars[UVX_MAX_HARMONICS_PER_COAX_MOTOR];
 };

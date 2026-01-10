@@ -7,7 +7,122 @@
 #include "UVX_CoaxMotorRPMHarmonicNotchFilter.h"
 #include <GCS_MAVLink/GCS.h>
 
-// destructor
+// table of user settable parameters
+const AP_Param::GroupInfo UVX_CoaxMotorRPMNotchFilterParams::var_info[] = {
+
+    // @Param: HCS
+    // @DisplayName: UVX coax RPM notch harmonic count
+    // @Description: Number of harmonics to use in the UVX coax RPM notch filter (0 disables). The harmonic scalars _H_ and bandwidth scalars _B_ are taken up this number.
+    // @Range: 0 8
+    // @User: Advanced
+    AP_GROUPINFO("HCS", 1, UVX_CoaxMotorRPMNotchFilterParams, num_harmonics, 4),
+
+    // @Param: H1
+    // @DisplayName: UVX coax RPM notch first instance harmonic scalar
+    // @Description: Scalar of a propeller rotational frequency for the first notch filter instance, defining its notch frequency (e.g. motor_rpm = 1800 and scalar = 1 defines a notch frequency of 30 Hz for that instance)
+    // @User: Advanced
+    AP_GROUPINFO("H1", 2, UVX_CoaxMotorRPMNotchFilterParams, harmonic_scalars[0], 1),
+
+    // @Param: H2
+    // @DisplayName: UVX coax RPM notch second instance harmonic scalar
+    // @Description: Scalar of a propeller rotational frequency for the second notch filter instance, defining its notch frequency (e.g. motor_rpm = 1800 and scalar = 2 defines a notch frequency of 60 Hz for that instance)
+    // @User: Advanced
+    AP_GROUPINFO("H2", 3, UVX_CoaxMotorRPMNotchFilterParams, harmonic_scalars[1], 2),
+
+    // @Param: H3
+    // @DisplayName: UVX coax RPM notch third instance harmonic scalar
+    // @Description: Scalar of a propeller rotational frequency for the third notch filter instance, defining its notch frequency (e.g. motor_rpm = 1800 and scalar = 3 defines a notch frequency of 90 Hz for that instance)
+    // @User: Advanced
+    AP_GROUPINFO("H3", 4, UVX_CoaxMotorRPMNotchFilterParams, harmonic_scalars[2], 3),
+
+    // @Param: H4
+    // @DisplayName: UVX coax RPM notch fourth instance harmonic scalar
+    // @Description: Scalar of a propeller rotational frequency for the fourth notch filter instance, defining its notch frequency (e.g. motor_rpm = 1800 and scalar = 4 defines a notch frequency of 120 Hz for that instance)
+    // @User: Advanced
+    AP_GROUPINFO("H4", 5, UVX_CoaxMotorRPMNotchFilterParams, harmonic_scalars[3], 4),
+
+    // @Param: H5
+    // @DisplayName: UVX coax RPM notch fifth instance harmonic scalar
+    // @Description: Scalar of a propeller rotational frequency for the fifth notch filter instance, defining its notch frequency (e.g. motor_rpm = 1800 and scalar = 5 defines a notch frequency of 150 Hz for that instance)
+    // @User: Advanced
+    AP_GROUPINFO("H5", 6, UVX_CoaxMotorRPMNotchFilterParams, harmonic_scalars[4], 5),
+
+    // @Param: H6
+    // @DisplayName: UVX coax RPM notch sixth instance harmonic scalar
+    // @Description: Scalar of a propeller rotational frequency for the sixth notch filter instance, defining its notch frequency (e.g. motor_rpm = 1800 and scalar = 6 defines a notch frequency of 180 Hz for that instance)
+    // @User: Advanced
+    AP_GROUPINFO("H6", 7, UVX_CoaxMotorRPMNotchFilterParams, harmonic_scalars[5], 6),
+
+    // @Param: H7
+    // @DisplayName: UVX coax RPM notch seventh instance harmonic scalar
+    // @Description: Scalar of a propeller rotational frequency for the seventh notch filter instance, defining its notch frequency (e.g. motor_rpm = 1800 and scalar = 7 defines a notch frequency of 210 Hz for that instance)
+    // @User: Advanced
+    AP_GROUPINFO("H7", 8, UVX_CoaxMotorRPMNotchFilterParams, harmonic_scalars[6], 7),
+
+    // @Param: H8
+    // @DisplayName: UVX coax RPM notch eighth instance harmonic scalar
+    // @Description: Scalar of a propeller rotational frequency for the eighth notch filter instance, defining its notch frequency (e.g. motor_rpm = 1800 and scalar = 8 defines a notch frequency of 240 Hz for that instance)
+    // @User: Advanced
+    AP_GROUPINFO("H8", 9, UVX_CoaxMotorRPMNotchFilterParams, harmonic_scalars[7], 8),
+
+    // @Param: B1
+    // @DisplayName: UVX coax RPM notch first instance bandwidth scalar
+    // @Description: Scalar of a propeller rotational frequency for the first notch filter instance, defining its bandwidth (e.g. motor_rpm = 1800 and scalar = 0.4 defines a bandwidth of 12 Hz for that instance)
+    // @User: Advanced
+    AP_GROUPINFO("B1", 10, UVX_CoaxMotorRPMNotchFilterParams, bandwidth_scalars[0], 0.4),
+
+    // @Param: B2
+    // @DisplayName: UVX coax RPM notch second instance bandwidth scalar
+    // @Description: Scalar of a propeller rotational frequency for the second notch filter instance, defining its bandwidth (e.g. motor_rpm = 1800 and scalar = 0.4 defines a bandwidth of 12 Hz for that instance)
+    // @User: Advanced
+    AP_GROUPINFO("B2", 11, UVX_CoaxMotorRPMNotchFilterParams, bandwidth_scalars[1], 0.4),
+
+    // @Param: B3
+    // @DisplayName: UVX coax RPM notch third instance bandwidth scalar
+    // @Description: Scalar of a propeller rotational frequency for the third notch filter instance, defining its bandwidth (e.g. motor_rpm = 1800 and scalar = 0.2 defines a bandwidth of 6 Hz for that instance)
+    // @User: Advanced
+    AP_GROUPINFO("B3", 12, UVX_CoaxMotorRPMNotchFilterParams, bandwidth_scalars[2], 0.2),
+
+    // @Param: B4
+    // @DisplayName: UVX coax RPM notch fourth instance bandwidth scalar
+    // @Description: Scalar of a propeller rotational frequency for the fourth notch filter instance, defining its bandwidth (e.g. motor_rpm = 1800 and scalar = 0.2 defines a bandwidth of 6 Hz for that instance)
+    // @User: Advanced
+    AP_GROUPINFO("B4", 13, UVX_CoaxMotorRPMNotchFilterParams, bandwidth_scalars[3], 0.2),
+
+    // @Param: B5
+    // @DisplayName: UVX coax RPM notch fifth instance bandwidth scalar
+    // @Description: Scalar of a propeller rotational frequency for the fifth notch filter instance, defining its bandwidth (e.g. motor_rpm = 1800 and scalar = 0.2 defines a bandwidth of 6 Hz for that instance)
+    // @User: Advanced
+    AP_GROUPINFO("B5", 14, UVX_CoaxMotorRPMNotchFilterParams, bandwidth_scalars[4], 0.2),
+
+    // @Param: B6
+    // @DisplayName: UVX coax RPM notch sixth instance bandwidth scalar
+    // @Description: Scalar of a propeller rotational frequency for the sixth notch filter instance, defining its bandwidth (e.g. motor_rpm = 1800 and scalar = 0.2 defines a bandwidth of 6 Hz for that instance)
+    // @User: Advanced
+    AP_GROUPINFO("B6", 15, UVX_CoaxMotorRPMNotchFilterParams, bandwidth_scalars[5], 0.2),
+
+    // @Param: B7
+    // @DisplayName: UVX coax RPM notch seventh instance bandwidth scalar
+    // @Description: Scalar of a propeller rotational frequency for the seventh notch filter instance, defining its bandwidth (e.g. motor_rpm = 1800 and scalar = 0.2 defines a bandwidth of 6 Hz for that instance)
+    // @User: Advanced
+    AP_GROUPINFO("B7", 16, UVX_CoaxMotorRPMNotchFilterParams, bandwidth_scalars[6], 0.2),
+
+    // @Param: B8
+    // @DisplayName: UVX coax RPM notch eighth instance bandwidth scalar
+    // @Description: Scalar of a propeller rotational frequency for the eighth notch filter instance, defining its bandwidth (e.g. motor_rpm = 1800 and scalar = 0.2 defines a bandwidth of 6 Hz for that instance)
+    // @User: Advanced
+    AP_GROUPINFO("B8", 17, UVX_CoaxMotorRPMNotchFilterParams, bandwidth_scalars[7], 0.2),
+
+    AP_GROUPEND
+};
+
+// parameters class constructor
+UVX_CoaxMotorRPMNotchFilterParams::UVX_CoaxMotorRPMNotchFilterParams(void)
+{
+    AP_Param::setup_object_defaults(this, var_info);
+}
+
+// harmonic notch filter class destructor
 UVX_CoaxMotorRPMHarmonicNotchFilter::~UVX_CoaxMotorRPMHarmonicNotchFilter()
 {
     free_filters();
