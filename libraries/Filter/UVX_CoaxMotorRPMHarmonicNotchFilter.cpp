@@ -123,13 +123,15 @@ UVX_CoaxMotorRPMNotchFilterParams::UVX_CoaxMotorRPMNotchFilterParams(void)
 }
 
 // harmonic notch filter class destructor
-UVX_CoaxMotorRPMHarmonicNotchFilter::~UVX_CoaxMotorRPMHarmonicNotchFilter()
+template <class T>
+UVX_CoaxMotorRPMHarmonicNotchFilter<T>::~UVX_CoaxMotorRPMHarmonicNotchFilter()
 {
     free_filters();
 }
 
 // free allocated filters
-void UVX_CoaxMotorRPMHarmonicNotchFilter::free_filters()
+template <class T>
+void UVX_CoaxMotorRPMHarmonicNotchFilter<T>::free_filters()
 {
     delete[] _filters;
     _filters = nullptr;
@@ -145,7 +147,8 @@ void UVX_CoaxMotorRPMHarmonicNotchFilter::free_filters()
  * @note if num_harmonics is greater than UVX_MAX_HARMONICS_PER_COAX_MOTOR the first UVX_MAX_HARMONICS_PER_COAX_MOTOR elements of both arrays will be used. Care must
  * be taken to ensure that the harmonic_scalars and bandwidth_scalars arrays are with the same length and with dimension equal to or greater than num_harmonics.
 */
-bool UVX_CoaxMotorRPMHarmonicNotchFilter::allocate_filters(const float *harmonic_scalars, const float *bandwidth_scalars, const uint16_t num_harmonics)
+template <class T>
+bool UVX_CoaxMotorRPMHarmonicNotchFilter<T>::allocate_filters(const float *harmonic_scalars, const float *bandwidth_scalars, const uint16_t num_harmonics)
 {
     // free filters if already allocated
     free_filters();
@@ -159,7 +162,7 @@ bool UVX_CoaxMotorRPMHarmonicNotchFilter::allocate_filters(const float *harmonic
 
     // allocate the filters
     const uint16_t nfilters = 2 * _num_harmonics;
-    _filters = NEW_NOTHROW UVX_HarmonicNotchFilterVector3f[nfilters];
+    _filters = NEW_NOTHROW UVX_HarmonicNotchFilter<T>[nfilters];
 
     if (_filters == nullptr)
     {
@@ -188,7 +191,8 @@ bool UVX_CoaxMotorRPMHarmonicNotchFilter::allocate_filters(const float *harmonic
  * be taken to ensure that the harmonic_scalars and bandwidth_scalars arrays are with the same length and with dimension equal to or greater than num_harmonics. Filters
  * will be re-allocated if the number of harmonics has changed. Otherwise, only the harmonic and bandwidth scalars are updated
 */
-bool UVX_CoaxMotorRPMHarmonicNotchFilter::update_params(const float *harmonic_scalars, const float *bandwidth_scalars, const uint16_t num_harmonics)
+template <class T>
+bool UVX_CoaxMotorRPMHarmonicNotchFilter<T>::update_params(const float *harmonic_scalars, const float *bandwidth_scalars, const uint16_t num_harmonics)
 {
     // check if filters have to be re-allocated
     if (num_harmonics == _num_harmonics)
@@ -224,7 +228,8 @@ bool UVX_CoaxMotorRPMHarmonicNotchFilter::update_params(const float *harmonic_sc
 }
 
 // reset all filters
-void UVX_CoaxMotorRPMHarmonicNotchFilter::reset()
+template <class T>
+void UVX_CoaxMotorRPMHarmonicNotchFilter<T>::reset()
 {
     // exit if filter allocation has failed or the filter is disabled
     if (_filters == nullptr || !_num_harmonics)
@@ -241,7 +246,8 @@ void UVX_CoaxMotorRPMHarmonicNotchFilter::reset()
 }
 
 // update the harmonic and bandwidth scalars
-void UVX_CoaxMotorRPMHarmonicNotchFilter::update_scalars(const float *harmonic_scalars, const float *bandwidth_scalars)
+template <class T>
+void UVX_CoaxMotorRPMHarmonicNotchFilter<T>::update_scalars(const float *harmonic_scalars, const float *bandwidth_scalars)
 {
     for (uint16_t i = 0; i < _num_harmonics; i++)
     {
@@ -251,13 +257,14 @@ void UVX_CoaxMotorRPMHarmonicNotchFilter::update_scalars(const float *harmonic_s
 }
 
 /**
- * run the filter on an input 3D vector sample
- * @param input input 3D vector with values (e.g. gyro or accel measurements)
+ * run the filter on an input sample
+ * @param input input on which the filter will be applied
  * @param up_rpm angular velocity of the upper propeller, [RPM]
  * @param lp_rpm angular velocity of the lower propeller, [RPM]
  * @param dt sampling time, [sec]
 */
-Vector3f UVX_CoaxMotorRPMHarmonicNotchFilter::run(const Vector3f &input, const float up_rpm, const float lp_rpm, const float dt)
+template <class T>
+T UVX_CoaxMotorRPMHarmonicNotchFilter<T>::run(const T &input, const float up_rpm, const float lp_rpm, const float dt)
 {
     // exit if filter allocation has failed or the filter is disabled
     if (_filters == nullptr || !_num_harmonics)
@@ -271,7 +278,7 @@ Vector3f UVX_CoaxMotorRPMHarmonicNotchFilter::run(const Vector3f &input, const f
 
     // run the notch filters
     uint16_t nfilters = 2 * _num_harmonics;
-    Vector3f out = input;
+    T out = input;
     for (uint16_t i = 0; i < nfilters; ++i)
     {
         // get the base frequency as that of the upper or lower motor
@@ -289,3 +296,7 @@ Vector3f UVX_CoaxMotorRPMHarmonicNotchFilter::run(const Vector3f &input, const f
 
     return out;
 }
+
+// instantiate template classes
+template class UVX_CoaxMotorRPMHarmonicNotchFilter<Vector3f>;
+template class UVX_CoaxMotorRPMHarmonicNotchFilter<float>;

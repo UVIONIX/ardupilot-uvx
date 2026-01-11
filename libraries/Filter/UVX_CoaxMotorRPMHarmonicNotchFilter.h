@@ -14,6 +14,7 @@ static constexpr uint16_t UVX_MAX_HARMONICS_PER_COAX_MOTOR = 8;
 /**
  * @brief Harmonic notch filter class for a coaxial motors configuration
 */
+template <class T>
 class UVX_CoaxMotorRPMHarmonicNotchFilter
 {
     // minimum allowed notch frequency
@@ -53,13 +54,13 @@ public:
     bool update_params(const float *harmonic_scalars, const float *bandwidth_scalars, const uint16_t num_harmonics);
 
     /**
-     * run the filter on an input 3D vector sample
-     * @param input input 3D vector with values (e.g. gyro or accel measurements)
+     * run the filter on an input sample
+     * @param input input on which the filter will be applied
      * @param up_rpm angular velocity of the upper propeller, [RPM]
      * @param lp_rpm angular velocity of the lower propeller, [RPM]
      * @param dt sampling time, [sec]
     */
-    Vector3f run(const Vector3f &input, const float up_rpm, const float lp_rpm, const float dt);
+    T run(const T &input, const float up_rpm, const float lp_rpm, const float dt);
 
     // reset all filters
     void reset();
@@ -81,7 +82,7 @@ private:
     uint16_t _num_harmonics{0};
 
     // individual filter instances container
-    UVX_HarmonicNotchFilterVector3f* _filters = nullptr;
+    UVX_HarmonicNotchFilter<T>* _filters = nullptr;
 };
 
 /**
@@ -105,3 +106,6 @@ public:
     // vector of scalars of a propeller rotational frequency, defining the filter bandwith at the respective frequency
     AP_Float bandwidth_scalars[UVX_MAX_HARMONICS_PER_COAX_MOTOR];
 };
+
+typedef UVX_CoaxMotorRPMHarmonicNotchFilter<Vector3f> UVX_CoaxMotorRPMHarmonicNotchFilterVector3f;
+typedef UVX_CoaxMotorRPMHarmonicNotchFilter<float> UVX_CoaxMotorRPMHarmonicNotchFilterFloat;
